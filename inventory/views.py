@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from .models import Product, Supplier, Stock, Order, InventoryLog
 from .serializers import (
     ProductSerializer, SupplierSerializer, StockSerializer,
@@ -10,6 +10,9 @@ from drf_yasg.utils import swagger_auto_schema
 from django.db.models import F
 from rest_framework.permissions import IsAdminUser
 from rest_framework import serializers
+from .models import Cart, CartItem
+from .serializers import CartSerializer, CartItemSerializer
+
 
 # Create your views here.
 
@@ -92,3 +95,26 @@ class OrderViewSet(viewsets.ModelViewSet):
 class InventoryLogViewSet(viewsets.ModelViewSet):
     queryset = InventoryLog.objects.all()
     serializer_class = InventoryLogSerializer
+
+class CartViewSet(viewsets.ModelViewSet):
+    serializer_class = CartSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Cart.objects.filter(user=self.request.user, checked_out=False)
+
+    @action(detail=True, methods=['post'])
+    def add_item(self, request, pk=None):
+        cart = self.get_object()
+        serializer = CartItemSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        product = serializer.validated_data['product']
+        quantity = serializer.validated_data['quantity']
+        # Check if item already in cart
+        item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if created:
+            item.quantity = quantity
+        else:
+            item.quantity += quantity
+        item.save()
+        return Response({'status': 'item added', 'item': CartItemSerializer(item).data})
