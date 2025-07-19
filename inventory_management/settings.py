@@ -31,7 +31,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = True
 
 # For local development, set allowed hosts directly:
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['initial-jca9.onrender.com', 'localhost', '127.0.0.1']
 # For production, you can use the environment variable version:
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
